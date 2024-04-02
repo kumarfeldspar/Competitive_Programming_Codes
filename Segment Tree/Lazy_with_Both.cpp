@@ -137,5 +137,3 @@ int32_t main()
         }
     }
 }
-SHARE CODE TO OTHERS
-    Test details

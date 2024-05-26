@@ -1,0 +1,118 @@
+/*
+https://codeforces.com/contest/620/submission/239614286
+*/
+
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define all(x) x.begin(), x.end()
+#define f(i, x) for (int i = 0; i < x; i++)
+#define bfor(i, a, b) for (int i = a; i >= b; i--)
+#define rep(i, a, b) for (int i = a; i < b; i++)
+
+const int N = 4e5 + 5;
+int n,q,in[N],timer=0,sz[N];
+vector<int> adj[N];
+void dfs(int v,int p){
+	in[v]=timer++;
+	sz[v]=1;
+	for(auto i:adj[v]){
+		if(i==p)continue;
+		dfs(i,v);
+		sz[v]+=sz[i];
+	}
+}
+/*
+1) set [L,R] to x
+2) find the bitwise OR from [L,R]
+*/
+int sgt[4 * N], arr[N],col[N];
+struct lazy
+{
+	bool is_pending;
+	int change_to;
+} lazy[4 * N];
+void push(int t, int tl, int tr)
+{
+	if (lazy[t].is_pending)
+	{
+		sgt[t] = lazy[t].change_to;
+	}
+	if (tl != tr)//if not leaf( has some children)
+	{
+		if (lazy[t].is_pending)
+		{
+			lazy[2 * t + 1].is_pending = 1;
+			lazy[2 * t + 1].change_to = lazy[t].change_to;
+			lazy[2 * t + 2].is_pending = 1;
+			lazy[2 * t + 2].change_to = lazy[t].change_to;
+		}
+	}
+	lazy[t].change_to = 0;
+	lazy[t].is_pending = 0;
+}
+
+void update(int t, int tl, int tr, int l, int r, int val)
+{ // change l to r to val
+	push(t, tl, tr);
+	if (l > tr || tl > r)
+		return;
+	if (l == tl && r == tr)
+	{ // this is important
+		lazy[t].is_pending = 1;
+		lazy[t].change_to = val;
+		push(t, tl, tr);
+		return;
+	}
+	int mid = (tl + tr) / 2;
+	update(2 * t + 1, tl, mid, l, min(r, mid), val);
+	update(2 * t + 2, mid + 1, tr, max(l, mid + 1), r, val);
+	sgt[t] = sgt[2 * t + 1] | sgt[2 * t + 2];
+}
+int query(int t, int tl, int tr, int l, int r)
+{
+	push(t, tl, tr);
+	if (l > tr || tl > r)
+		return 0;
+	if (tl >= l && tr <= r)
+	{
+		return sgt[t];
+	}
+	int mid = (tl + tr) / 2;
+	return query(2 * t + 1, tl, mid, l, min(r, mid)) | query(2 * t + 2, mid + 1, tr, max(l, mid + 1), r);
+}
+
+int32_t main()
+{
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+	 
+	 cin>>n>>q;
+     f(i,n)cin>>col[i],col[i]--;
+	 f(i,n-1){
+		int u,v;cin>>u>>v;
+		u--,v--;
+		adj[v].push_back(u);
+		adj[u].push_back(v);
+	 }
+	 dfs(0,0);
+     f(i, n) update(0, 0, n - 1, in[i], in[i], (1LL << col[i]));
+     while(q--){
+		int type;cin>>type;
+        if(type==1){
+            int v,c;cin>>v>>c;
+            v--,c--;
+            update(0,0,n-1,in[v],in[v]+sz[v]-1,(1LL<<c));
+        }
+        else{
+            int v;cin>>v;
+            v--;
+            int ans=query(0,0,n-1,in[v],in[v]+sz[v]-1);
+            cout<<__builtin_popcountll(ans)<<'\n';
+        }
+
+		
+	 }
+
+
+}
